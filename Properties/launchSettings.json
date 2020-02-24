@@ -17,7 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "Company.WebApplication1": {
+    "kpack_demo": {
       "commandName": "Project",
       "launchBrowser": true,
       "launchUrl": "api/values",
