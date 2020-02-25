@@ -7,25 +7,18 @@ ROOT_FOLDER="$(pwd)"
 THIS_FOLDER="$(dirname "${BASH_SOURCE[0]}")"
 
 # PRODUCT PREVIEW BITS
-KPACK_MANIFEST_PATH="/mnt/c/Users/pivotal/Downloads/kpack/release-0.0.6.yaml"
-LOGS_ARCHIVE_PATH="/mnt/c/Users/pivotal/Downloads/kpack/logs-v0.0.6-linux.tgz"
+KPACK_MANIFEST_PATH="${1}" #"/mnt/c/Users/pivotal/Downloads/kpack/release-0.0.6.yaml"
 
 # K8s MANIFESTS
-CLUSTERBUILDER_MANIFEST_PATH="${THIS_FOLDER}/cluster-builder.yaml"
-SECRET_MANIFEST_PATH="${THIS_FOLDER}/secret.yaml"
-SERVICE_ACCOUNT_MANIFEST_PATH="${THIS_FOLDER}/service-account.yaml"
+CLUSTERBUILDER_MANIFEST_PATH="${THIS_FOLDER}/kpack-assets.yaml"
 
 # VARIABLES
-K8_CONTEXT_NAME="docker-desktop"
 CLUSTERBUILDER_NAME="cloud-foundry"
 
 if ! command -v "jq" >/dev/null; then
     writeErr "jq needs to be installed - 'apt-get -y install jq'"
     exit 1;
 fi
-
-echo "Setting K8 context to ${K8_CONTEXT_NAME}"
-kubectl config use-context "${K8_CONTEXT_NAME}"
 
 echo "Creating kpack things in K8 cluster"
 if ! ret=$(kubectl apply --filename "${KPACK_MANIFEST_PATH}"); then
@@ -49,7 +42,9 @@ while true; do
 done
 echo ""
 
-echo "Creating ClusterBuilder resource from ${CLUSTERBUILDER_MANIFEST_PATH}"
+echo "======= kpack namspace and assets created successfully ======="
+
+echo "Creating ClusterBuilder resource, Service Account, and Account Secret from ${CLUSTERBUILDER_MANIFEST_PATH}"
 if ! kubectl apply -f "${CLUSTERBUILDER_MANIFEST_PATH}"; then
     echo "Could not apply ClusterBuilder"
     exit 1
@@ -68,17 +63,4 @@ fi
 
 echo "======= kpack resources installed successfully ======="
 
-echo "Creating docker service secret"
-if ! kubectl apply -f "${SECRET_MANIFEST_PATH}"; then
-    echo "Could not create secret"
-    exit 1
-fi
-
-echo "Creating docker service-account"
-if ! kubectl apply -f "${SERVICE_ACCOUNT_MANIFEST_PATH}"; then
-    echo "Could not create service-account"
-    exit 1
-fi
-
-echo "======= docker secret and service-account created successfully ======="
 exit 0
