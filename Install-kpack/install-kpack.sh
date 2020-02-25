@@ -21,7 +21,7 @@ if ! command -v "jq" >/dev/null; then
 fi
 
 echo "Creating kpack things in K8 cluster"
-if ! ret=$(kubectl apply --filename "${KPACK_MANIFEST_PATH}"); then
+if ! kubectl apply --filename "${KPACK_MANIFEST_PATH}"; then
     echo "Could not apply kpack namespace"
     exit 1
 fi
@@ -47,17 +47,6 @@ echo "======= kpack namspace and assets created successfully ======="
 echo "Creating ClusterBuilder resource, Service Account, and Account Secret from ${CLUSTERBUILDER_MANIFEST_PATH}"
 if ! kubectl apply -f "${CLUSTERBUILDER_MANIFEST_PATH}"; then
     echo "Could not apply ClusterBuilder"
-    exit 1
-fi
-
-echo "Validate builder was created"
-if ! ret=$(kubectl get clusterbuilder ${CLUSTERBUILDER_NAME} -o json); then
-    echo "Could not get ClusterBuilder info"
-    exit 1
-fi
-
-if [[ ! $(echo "${ret}" | jq '.status.conditions[0].status') == *"True"* ]]; then
-    echo "ClusterBuilder status not true"
     exit 1
 fi
 
