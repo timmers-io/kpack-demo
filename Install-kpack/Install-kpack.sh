@@ -3,15 +3,26 @@
 set -e
 set -o errtrace
 
+ROOT_FOLDER="$(pwd)"
+THIS_FOLDER="$(dirname "${BASH_SOURCE[0]}")"
+
+# PRODUCT PREVIEW BITS
 KPACK_MANIFEST_PATH="/mnt/c/Users/pivotal/Downloads/kpack/release-0.0.6.yaml"
 LOGS_ARCHIVE_PATH="/mnt/c/Users/pivotal/Downloads/kpack/logs-v0.0.6-linux.tgz"
+
+# K8s MANIFESTS
+CLUSTERBUILDER_MANIFEST_PATH="${THIS_FOLDER}/cluster-builder.yaml"
+SECRET_MANIFEST_PATH="${THIS_FOLDER}/secret.yaml"
+SERVICE_ACCOUNT_MANIFEST_PATH="${THIS_FOLDER}/service-account.yaml"
+
+# VARIABLES
 K8_CONTEXT_NAME="docker-desktop"
-CLUSTERBUILDER_MANIFEST_PATH="./cluster-builder.yaml"
 CLUSTERBUILDER_NAME="cloud-foundry"
 
-#echo "Installing dependencies"
-#apt-get -y update
-#apt-get -y install jq
+if ! command -v "jq" >/dev/null; then
+    writeErr "jq needs to be installed - 'apt-get -y install jq'"
+    exit 1;
+fi
 
 echo "Setting K8 context to ${K8_CONTEXT_NAME}"
 kubectl config use-context "${K8_CONTEXT_NAME}"
@@ -55,5 +66,19 @@ if [[ ! $(echo "${ret}" | jq '.status.conditions[0].status') == *"True"* ]]; the
     exit 1
 fi
 
-echo "kpack install successfully"
+echo "======= kpack resources installed successfully ======="
+
+echo "Creating docker service secret"
+if ! kubectl apply -f "${SECRET_MANIFEST_PATH}"; then
+    echo "Could not create secret"
+    exit 1
+fi
+
+echo "Creating docker service-account"
+if ! kubectl apply -f "${SERVICE_ACCOUNT_MANIFEST_PATH}"; then
+    echo "Could not create service-account"
+    exit 1
+fi
+
+echo "======= docker secret and service-account created successfully ======="
 exit 0
